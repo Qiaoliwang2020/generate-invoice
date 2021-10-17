@@ -1,0 +1,206 @@
+<div class="container">
+    <h1 class="">Data Generate</h1>
+    <div class="row">
+        <a  href="/" class="btn noPrint" style="margin-left: 30px;margin-top: 15px;">generate Invoice</a>
+        <!-- Modal Trigger -->
+        <div id="addButton-container" class="col s3">
+            <button id="addButton" class="waves-effect waves-light btn-floating btn-large modal-trigger" data-target="addCardModal">
+                <i class="material-icons">add</i>
+            </button>
+        </div>
+
+        <!-- Modal Structure -->
+        <div id="addCardModal" class="modal">
+            <div class="modal-content">
+                <h4>New Products</h4>
+                <div class="input-field col s12">
+                    <input  placeholder="Products (e.g. A1)" id="podName" type="text" class="validate" required>
+                    <label for="podName"> Products Name </label>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <div class="row center">
+                    <a id="addAreaButton" class="modal-close waves-effect waves-light btn">Submit</a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<div class="container">
+    <div class="row">
+        <div class="print-area">
+            <p class="noPrint" style="padding:10px 0px;"> if you have excel file from LC, Please upload it first. Otherwise it will no display the data.</p>
+            <input class="noPrint" type="file" id="input" />
+            <span class="noPrint">Lc excel : </span><input class="noPrint" type="file" id="inputLc" value="selec 果蔬文件" />
+            <input class="noPrint" type="button" name="print" onclick="window.print()" value="print">
+            <div><input class="noPrint" type="button" name="hideName" onclick="$('.customer-name').hide()"value="hide name" /></div>
+            <div><input class="noPrint" type="button" name="hideName" onclick="$('.customer-name').show()"value="show name" /></div>
+        
+            <h2>Floor</h2>
+            <table  border="1" id="list" >
+        
+            </table>
+            <h2 class="noPrint">Le Crois</h2>
+            <table class="noPrint" border="1" id="bread">
+        
+            </table>
+            <div id="totalBread" style="text-align: right;" class="noPrint"></div>
+            <div id="discountBread" style="text-align: right;" class="noPrint"></div>
+            <h2>御黑堂</h2>
+            <table border="1" id="milk">
+        
+            </table>
+            <div id="totalMilk" style="text-align: right;"></div>
+            <div id="discountMilk" style="text-align: right;"></div>
+        </div>
+    </div>
+</div>
+
+
+  <script src="https://unpkg.com/read-excel-file@5.x/bundle/read-excel-file.min.js"></script>
+  <script>
+    var input = document.getElementById('input');
+    var inputLc = document.getElementById('inputLc');
+    let fileNumber = 0
+    let breads = [];
+  
+    inputLc.addEventListener('change', function () {
+      readXlsxFile(inputLc.files[0]).then(function (rows) {
+        for (var i = 1; i < rows.length - 1; i++) {
+          let name = rows[i][0].toString().slice(6).replace('Le Crois', "").trim();
+          breads.push({ name: name, price: rows[i][2], total: rows[i][1], size: null });
+        }
+      })
+    });
+    input.addEventListener('change', function () {
+      fileNumber++;
+      let template;
+      let body;
+      let breadTotal = [];
+      let milkTotal = [];
+      let proAll = [];
+      let breadResult = [];
+
+      let proBread = '<%= products %>'.split(',');
+      
+      $('#list').empty();
+      readXlsxFile(input.files[0]).then(function (rows) {
+        //console.log(rows);
+        console.log(fileNumber);
+        // floor
+        for (var i = 1; i < rows.length; i++) {
+          template = `
+          <tr>
+            <td style='${rows[i][0] == null ? 'border:0' : 'border-bottom:0'}'>${rows[i][0] == null ? ' ' : rows[i][0]}</td>
+            <td class="customer-name">${rows[i][1] == null ? ' ' : rows[i][1]}</td>
+            <td>${rows[i][3] == null ? ' ' : rows[i][3]}</td>
+            <td>${rows[i][4] == null ? ' ' : rows[i][4]}</td>
+            <td>${rows[i][6] == null ? ' ' : rows[i][6]}</td>
+            <td>${rows[i][13] == null ? ' ' : rows[i][13]}</td>
+            </tr>`
+          $('#list').append(template);
+        }
+        // prodcuts
+        for (var i = 1; i < rows.length; i++) {
+          if (rows[i][32] == '总和')
+            rows.length = i + 1;
+          if (rows[i][32] != '总和') {
+            proAll.push({ name: rows[i][32], price: rows[i][36], total: rows[i][37], size: rows[i][33] });
+          }
+        }
+        console.log(proAll, 'all');
+  
+        let milk = [];
+  
+        proAll.forEach((pro) => {
+          if (pro.name != '商品') {
+            if (proBread.indexOf(pro.name) != -1) {
+              breads.push(pro);
+            }
+            else {
+              milk.push(pro);
+            }
+          }
+        })
+        window.localStorage.setItem(fileNumber, JSON.stringify(breads));
+  
+  
+        breads.forEach(function (a) {
+          if (!this[a.name]) {
+            this[a.name] = { name: a.name, total: 0, price: a.price, };
+            breadResult.push(this[a.name]);
+          }
+          this[a.name].total += a.total;
+        }, Object.create(null));
+        //console.log(breads);
+        let breadTable;
+        let breadTitle;
+        $('#bread').empty();
+        breadTitle = `
+          <tr>
+            <td><b>${proAll[0].name}</b></td>
+            <td><b>${proAll[0].price}</b></td>
+            <td><b>${proAll[0].total}</b></td>
+            <td><b>总价</b></td>
+            </tr>`
+        $('#bread').append(breadTitle);
+        breadTotal = [];
+        breadResult.forEach((item) => {
+          if (i > 0) {
+            item.totalPrice = Number(item.price) * Number(item.total);
+          }
+          if (item.totalPrice) {
+            breadTotal.push(item.totalPrice);
+          }
+          breadTable = `
+          <tr>
+             <td>${item.name}</td>
+             <td>${item.price}</td>
+             <td>${item.total}</td>
+             <td>${item.totalPrice.toFixed(2)}</td>
+            </tr>`
+  
+          $('#bread').append(breadTable);
+          let sum = breadTotal.reduce(function (a, b) { return a + b; }, 0)
+          $('#totalBread').text(`Total: ${sum.toFixed(2)}`);
+          $('#discountBread').text(`Discount: ${(sum * 0.85).toFixed(2)}`);
+        })
+        console.log(milk);
+        let milkTable;
+        let milkTitle;
+        $('#milk').empty();
+        milkTitle = `
+          <tr>
+            <td><b>${proAll[0].name}</b></td>
+            <td><b>${proAll[0].size}</b></td>
+            <td><b>${proAll[0].price}</b></td>
+            <td><b>${proAll[0].total}</b></td>
+            <td><b>总价</b></td>
+            </tr>`
+        $('#milk').append(milkTitle);
+        milkTotal = [];
+        milk.forEach((item) => {
+          if (i > 0) {
+            item.totalPrice = Number(item.price) * Number(item.total);
+          }
+          if (item.totalPrice) {
+            milkTotal.push(item.totalPrice);
+          }
+          milkTable = `
+          <tr>
+             <td>${item.name}</td>
+             <td>${item.size == null ? ' ' : item.size}</td>
+             <td>${item.price}</td>
+             <td>${item.total}</td>
+             <td>${item.totalPrice.toFixed(2)}</td>
+            </tr>`
+  
+          $('#milk').append(milkTable);
+          let sum = milkTotal.reduce(function (a, b) { return a + b; }, 0)
+          $('#totalMilk').text(`Total: ${sum.toFixed(2)}`);
+          $('#discountMilk').text(`Discount: ${(sum * 0.85).toFixed(2)}`);
+        })
+      })
+      console.log(fileNumber);
+    })
+  </script>

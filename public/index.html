@@ -1,0 +1,209 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Generate Invoice</title>
+    <style type="text/css">
+        @media print {
+            .noPrint {
+                display: none;
+            }
+        }
+
+        body {
+            font-size: 14px;
+            font-family: sans-serif;
+            background-color: white !important;
+        }
+
+        .print-area {
+            width: 80%;
+            margin: 0 auto;
+        }
+
+        p {
+            margin: 0;
+        }
+        td, th{
+            padding: 0 !important;
+        }
+
+        table {
+            width: 100%;
+            margin-top: 20px;
+            border-collapse: collapse;
+            font-size: 12px;
+        }
+        table, th, td{
+            border: 1px solid #000 !important;
+        }
+
+        .display-flex {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        input[type="date"] {
+            background: transparent;
+            border: 0;
+            appearance: none;
+
+        }
+
+        input[type="date"]::-webkit-inner-spin-button,
+        input[type="date"]::-webkit-calendar-picker-indicator {
+            display: none;
+            -webkit-appearance: none;
+        }
+
+        .bill-to .title-text {
+            margin-bottom: 10px;
+            font-weight: bold;
+            border-bottom: 1px solid #000;
+        }
+
+        .date {
+            font-size: 12px;
+            margin: 15px 0px;
+        }
+
+        .address {
+            font-size: 12px;
+        }
+    </style>
+    <!-- Compiled and minified CSS -->
+    <!-- Materialze-->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/css/materialize.min.css">
+
+    <!-- Materialize icons-->
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+
+    <link href="styles.css" rel="stylesheet">
+</head>
+
+<body>
+    <header>
+        <nav>
+            <div class="nav-wrapper noPrint" style=" background-color: #9E65A9;">
+                <ul id="nav-mobile" class="right hide-on-med-and-down">
+                    <li><a href="https://www.linkedin.com/in/wangqiaoli">Linkedin</a></li>
+                </ul>
+            </div>
+        </nav>
+    </header>
+    <main>
+
+        <div class="container">
+            <h1 class="title noPrint">Generate Invoice</h1>
+            <div class="row">
+                <div class="print-area">
+                    <input class="noPrint" type="file" id="input" />
+                    <input class="noPrint" type="button" name="print" onclick="window.print()" value="print">
+                    <a  href="/dashboard" class="btn noPrint" style="margin-left: 30px;">generate data</a>
+                    <h2>Tax Invoice</h2>
+                    <div class="address">
+                        <p class="display-flex"><span><b>Le Crois</b></span><span>235 Springvale Road</span></p>
+                        <p class="display-flex">
+                            <span>Shop L030 The Glen</span>
+                            <span>Glen Waverley VIC 3150</span>
+                        </p>
+                        <p>ABN：83619379690</p>
+                    </div>
+
+                    <div class="date">
+                        Date: <input type="date" name="date">
+                    </div>
+
+                    <div class="bill-to">
+                        <div class="title-text">BILL TO</div>
+                        <div class="address">
+                            <p>Fresh Choys</p>
+                            <p>Factory 3, 27-33 thronton Cres, Mitcham</p>
+                        </div>
+                    </div>
+
+                    <table border="1" id="list"></table>
+                    <div style="margin: 20px 0px; text-align: right;">
+                        <p><b>SUBTOTAL:</b> <span style="display:inline-block; width: 100px;" id="total"></span> </p>
+                        <p><b>DISCOUNT:</b> <span style="display:inline-block; width: 100px;"> 15%</span></p>
+                        <hr>
+                        <p><b>Balance Due $<span id="discount" style="display:inline-block; width: 100px;"></span></b>
+                        </p>
+                    </div>
+                </div>
+
+            </div>
+
+        </div>
+
+    </main>
+    <footer class="page-footer noPrint">
+        <div class="footer-copyright">
+            <div class="container" style="text-align: center;">
+                © 2021 Copyright Qiaoli Wang
+            </div>
+        </div>
+    </footer>
+
+
+
+
+    <!-- socket IO Served by the server
+    <script src="/socket.io/socket.io.js"></script> -->
+
+    <!-- jQuery (necessary for Bootstrap's JavaScript plugins) -->
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.12.4/jquery.min.js"></script>
+    <!-- Include all compiled plugins (below), or include individual files as needed -->
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js"></script>
+
+    <!-- Compiled and minified JavaScript -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/js/materialize.min.js"></script>
+
+    <!-- reference Moment.js library -->
+    <script src="//cdnjs.cloudflare.com/ajax/libs/moment.js/2.7.0/moment.min.js" type="text/javascript"></script>
+
+    <script src="env.js"></script>
+    <script src="https://unpkg.com/read-excel-file@5.x/bundle/read-excel-file.min.js"></script>
+    <script>
+        var input = document.getElementById('input');
+
+        input.addEventListener('change', function () {
+            let template;
+            let total = [];
+            $('#list').empty();
+            readXlsxFile(input.files[0]).then(function (rows) {
+                console.log(rows)
+                for (var i = 0; i < rows.length - 1; i++) {
+
+                    if (i > 0) {
+                        rows[i][3] = Number(rows[i][1]) * Number(rows[i][2]);
+                    }
+                    if (rows[i][3]) {
+                        total.push(rows[i][3]);
+                    }
+                    template = `<tr style="border: 1px solid #000;">
+          <td>${rows[i][0] == '商品' ? '<b>DESCRIPTION</b>' : rows[i][0]}</td>
+           <td>${rows[i][1] == '数量' ? '<b>QTY</b>' : rows[i][1]}</td>
+            <td>${rows[i][2] == null ? '<b>UNIT PRICE</b>' : rows[i][2].toFixed(2)}</td>
+             <td>${rows[i][3] == undefined ? '<b>TOTAL</b>' : rows[i][3].toFixed(2)}</td>
+      </tr>`
+                    $('#list').append(template);
+                    console.log(total);
+                    let sum = total.reduce(function (a, b) { return a + b; }, 0)
+                    console.log(sum);
+                    $('#total').text(sum.toFixed(2));
+                    $('#discount').text((sum * 0.85).toFixed(2));
+                }
+
+            })
+        })
+    </script>
+
+</body>
+
+
+</html>
