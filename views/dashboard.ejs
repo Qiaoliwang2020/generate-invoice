@@ -35,8 +35,8 @@
             <input class="noPrint" type="button" name="print" onclick="window.print()" value="print">
             <div><input class="noPrint" type="button" name="hideName" onclick="$('.customer-name').hide()"value="hide name" /></div>
             <div><input class="noPrint" type="button" name="hideName" onclick="$('.customer-name').show()"value="show name" /></div>
-        
-            <h2>Floor</h2>
+            <input class="noPrint" type="file" id="test" />
+            <h2 class="noPrint">Floor</h2>
             <table  border="1" id="list" >
         
             </table>
@@ -46,7 +46,7 @@
             </table>
             <div id="totalBread" style="text-align: right;" class="noPrint"></div>
             <div id="discountBread" style="text-align: right;" class="noPrint"></div>
-            <h2>御黑堂</h2>
+            <h2 class="noPrint">御黑堂</h2>
             <table border="1" id="milk">
         
             </table>
@@ -59,11 +59,38 @@
 
   <script src="https://unpkg.com/read-excel-file@5.x/bundle/read-excel-file.min.js"></script>
   <script>
+    var test = document.getElementById('test');
     var input = document.getElementById('input');
     var inputLc = document.getElementById('inputLc');
     let fileNumber = 0
     let breads = [];
-  
+    let acs = [];
+
+    test.addEventListener('change', function () {
+      readXlsxFile(test.files[0]).then(function (rows) {
+        let header = `<tr>
+            <td style='${'text-align:center;padding:5px;font-size:14px;font-weight:bold'}'>${rows[0][0]}</td>
+            <td style='${'text-align:center;padding:5px;font-size:14px;font-weight:bold'}'>${rows[0][1]}</td>
+            <td style='${'text-align:center;padding:5px;font-size:14px;font-weight:bold'}'>${rows[0][2]}</td>
+            <td style='${'text-align:center;padding:5px;font-size:14px;font-weight:bold'}'>${rows[0][3]}</td>
+            <td style='${'text-align:center;padding:5px;font-size:14px;font-weight:bold'}'>${rows[0][4]}</td>
+            <td style='${'text-align:center;padding:5px;font-size:14px;font-weight:bold'}'>${rows[0][5]}</td>
+          </tr>`
+          $('#list').append(header);
+        for (var i = 1; i < rows.length; i++) {
+          template = `
+          <tr>
+            <td style='${'text-align:center;padding:5px;font-size:14px'}'>${rows[i][0] == null ? ' ' : moment(rows[i][0]).format('DD/MM/YYYY') }</td>
+            <td style='${'text-align:center;padding:5px;font-size:14px'}' class="customer-name">${rows[i][1] == null ? ' ' : rows[i][1]}</td>
+            <td style='${'text-align:center;padding:5px;font-size:14px'}'>${rows[i][2] == null ? ' ' : rows[i][2]}</td>
+            <td style='${'text-align:center;padding:5px;font-size:14px'}'>${rows[i][3] == null ? ' ' : rows[i][3]}</td>
+            <td style='${'padding:5px;font-size:14px'}'>${rows[i][4] == null ? ' ' : rows[i][4]}</td>
+            <td style='${'text-align:center;padding:5px;font-size:14px'}'>${rows[i][5] == null ? ' ' : rows[i][5]}</td>
+            </tr>`
+          $('#list').append(template);
+        }
+      })
+    });
     inputLc.addEventListener('change', function () {
       readXlsxFile(inputLc.files[0]).then(function (rows) {
         for (var i = 1; i < rows.length - 1; i++) {
